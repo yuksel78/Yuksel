@@ -1,2 +1,0 @@
-# Yuksel
-yuksel burcu çalışması
