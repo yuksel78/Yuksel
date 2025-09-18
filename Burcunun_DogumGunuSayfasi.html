@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Burcu’ya Doğum Günü Oyunu</title>
+<style>
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg,#ffe6f0,#fefbd8);
+  padding: 10px;
+  text-align: center;
+  overflow-y:auto;
+  min-height:100vh;
+}
+h1 {color:#e60073;margin-bottom:5px;}
+#gameArea {position:relative;width:95%;max-width:500px;margin:10px auto;background:#fff0f5;border-radius:15px;box-shadow:0 0 10px rgba(230,0,115,0.3);overflow:hidden;min-height:300px;aspect-ratio:5/3;}
+.heart {position:absolute;cursor:pointer;user-select:none;transition: transform 0.2s ease, opacity 0.3s ease;width:40px;height:40px;}
+.heart img {width:100%;height:100%;}
+.heart:active {transform:scale(1.3);}
+#score {font-size:1.2rem;margin-top:5px;color:#e60073;}
+#message {margin-top:15px;font-size:1.2rem;color:#333;min-height:2em;opacity:0;transition:opacity 0.8s ease;}
+#surpriseBox {margin:20px auto;width:200px;height:200px;background:#e60073;border-radius:25px;box-shadow:0 0 30px rgba(230,0,115,0.6);position:relative;overflow:hidden;}
+#boxLid {position:absolute;top:0;left:0;width:100%;height:60px;background: linear-gradient(45deg,#ff5aa2,#b5005c);border-top-left-radius:25px;border-top-right-radius:25px;box-shadow: inset 0 2px 5px rgba(255,255,255,0.4);transition: transform 1s ease;transform-origin: top center; z-index:10;}
+#boxLid.opened {transform:rotateX(-110deg);}
+#boxBody {position:absolute;top:60px;left:0;width:100%;height:140px;background: linear-gradient(45deg,#ff77b3,#d61f87);border-bottom-left-radius:25px;border-bottom-right-radius:25px;box-shadow: inset 0 2px 5px rgba(0,0,0,0.3); z-index:5;}
+#musicButton {margin-top:10px;padding:10px 20px;background:white;color:#e60073;border:none;border-radius:25px;font-size:1rem;cursor:pointer;box-shadow:0 5px 15px rgba(230,0,115,0.6);display:none;}
+</style>
+</head>
+<body>
+
+<h1>Burcu’nun Doğum Günü Oyunu 🎉</h1>
+<p>Hareket eden emojilere dokun, 10 puan topla ve sürprizi aç!</p>
+
+<div id="gameArea"></div>
+<div id="score">Puan: 0</div>
+<div id="message"></div>
+
+<div id="surpriseBox">
+  <div id="boxLid"></div>
+  <div id="boxBody"></div>
+</div>
+
+<button id="musicButton">🎶 Eğlenceyi Başlat 🎶</button>
+
+<script>
+// Emoji resim dosyaları
+const emojiImages = [
+  'emoji_heart.png', // 💖
+  'emoji_flower.png', // 🌸
+  'emoji_teddy.png',  // 🧸
+  'emoji_star.png',   // ⭐
+  'emoji_balloon.png' // 🎈
+];
+
+const gameArea = document.getElementById('gameArea');
+const scoreDisplay = document.getElementById('score');
+const message = document.getElementById('message');
+const boxLid = document.getElementById('boxLid');
+const musicButton = document.getElementById('musicButton');
+
+let score = 0;
+const targetScore = 10;
+const hearts = [];
+
+function getGameAreaSize(){ return { width:gameArea.clientWidth, height:gameArea.clientHeight }; }
+
+function createHeart(index){
+  const heart = document.createElement('div');
+  heart.classList.add('heart');
+
+  const img = document.createElement('img');
+  img.src = emojiImages[index % emojiImages.length];
+  heart.appendChild(img);
+
+  const {width,height} = getGameAreaSize();
+  const size = 40;
+  heart.style.left = Math.random()*(width-size)+'px';
+  heart.style.top = Math.random()*(height-size)+'px';
+  heart.speedX = (Math.random()-0.5)*2;
+  heart.speedY = (Math.random()-0.5)*2;
+
+  function handleClick(e){
+    e.preventDefault();
+    if(score>=targetScore) return;
+    let emojiScore = (index % emojiImages.length === 2) ? -3 : 1; // 🧸 negatif
+    score += emojiScore;
+    if(score<0) score=0;
+    scoreDisplay.textContent=`Puan: ${score}`;
+    if(score>=targetScore){
+      hearts.forEach(h=>h.style.pointerEvents='none');
+      showMessageAndBox();
+    }
+  }
+
+  heart.addEventListener('click',handleClick);
+  heart.addEventListener('touchstart',handleClick,{passive:false});
+
+  gameArea.appendChild(heart);
+  hearts.push(heart);
+}
+
+function moveHearts(){
+  const {width,height} = getGameAreaSize();
+  hearts.forEach(heart=>{
+    let left=parseFloat(heart.style.left);
+    let top=parseFloat(heart.style.top);
+    const size=40;
+    left+=heart.speedX;
+    top+=heart.speedY;
+    if(left<0||left>width-size) heart.speedX*=-1;
+    if(top<0||top>height-size) heart.speedY*=-1;
+    heart.style.left=left+'px';
+    heart.style.top=top+'px';
+  });
+  requestAnimationFrame(moveHearts);
+}
+
+function showMessageAndBox(){
+  message.textContent="İyi ki doğdun Hayatım! 🎉 Akşama büyük kutlama! 😘";
+  message.style.opacity=1;
+  setTimeout(()=>{ boxLid.classList.add('opened'); musicButton.style.display='inline-block'; },1500);
+}
+
+// Oluştur
+for(let i=0;i<12;i++) createHeart(i);
+moveHearts();
+
+// MP3
+const audio = new Audio("bangirbangir.mp3");
+musicButton.addEventListener('click',()=>{
+  audio.play().catch(e=>console.log(e));
+  musicButton.disabled=true;
+  musicButton.textContent="🎶 Çalıyor...";
+});
+</script>
+</body>
+</html>
